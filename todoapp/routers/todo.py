@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from starlette import status
 from requests import ToDoRequest
 from routers import auth
+from .auth import get_current_user
 
 router = APIRouter()
 
@@ -18,31 +19,42 @@ def get_db():
         db.close()
 
 db_dependency = Annotated[Session, Depends(get_db)]
+user_dependency = Annotated[dict, Depends(get_current_user)]
 
 @router.get("/todos")
-async def read_todos(db: db_dependency):
+async def read_todos(user: user_dependency, db: db_dependency):
+    if user is None:
+        return HTTPException(status_code=401, detail="Invalid authentication credentials")
     return db.query(ToDo).all()
 
 @router.get("/todos/{todo_id}", status_code=status.HTTP_200_OK)
-async def read_todo(db: db_dependency, todo_id: int = Path(gt=0)):
+async def read_todo(user: user_dependency, db: db_dependency, todo_id: int = Path(gt=0)):
+    if user is None:
+        return HTTPException(status_code=401, detail="Invalid authentication credentials")
     todo = db.query(ToDo).filter(ToDo.id == todo_id).first()
     if todo is not None:
         return todo
     return HTTPException(status_code=404, detail="ToDo not found")
 
 @router.post("/todos", status_code=status.HTTP_201_CREATED)
-async def create_todo(db: db_dependency, todo_request: ToDoRequest):
-    todo = ToDo(**todo_request.model_dump())
+async def create_todo(user: user_dependency, db: db_dependency, todo_request: ToDoRequest):
+    if user is None:
+        return HTTPException(status_code=401, detail="Invalid authentication credentials")
+    todo = ToDo(**todo_request.model_dump(), owner_id=user['id'])
     db.add(todo)
     db.commit()
     db.refresh(todo)
     return todo
 
 @router.put("/todos/{todo_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def update_todo(db: db_dependency, todo_request: ToDoRequest, todo_id: int = Path(gt=0)):
+async def update_todo(user: user_dependency, db: db_dependency, todo_request: ToDoRequest, todo_id: int = Path(gt=0)):
+    if user is None:
+        return HTTPException(status_code=401, detail="Invalid authentication credentials")
     todo = db.query(ToDo).filter(ToDo.id == todo_id).first()
     if todo is None:
         raise HTTPException(status_code=404, detail="ToDo not found")
+    if todo.owner_id != user['id']:
+        raise HTTPException(status_code=403, detail="Not authorized to update this ToDo")
     todo.title = todo_request.title
     todo.description = todo_request.description
     todo.completed = todo_request.completed
@@ -54,7 +66,7 @@ async def update_todo(db: db_dependency, todo_request: ToDoRequest, todo_id: int
 
 
 @router.delete("/todos/{todo_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_todo(db: db_dependency, todo_id: int = Path(gt=0)):
+async def delete_todo(user: user_dependency, db: db_dependency, todo_id: int = Path(gt=0)):
     todo = db.query(ToDo).filter(ToDo.id == todo_id).first()
     if todo is None:
         raise HTTPException(status_code=404, detail="ToDo not found")
