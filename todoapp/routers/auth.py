@@ -1,6 +1,6 @@
 import datetime
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.security import OAuth2PasswordRequestForm
+from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from models import User
 from database import engine, SessionLocal
 from typing import Annotated
@@ -19,6 +19,7 @@ SECRET_KEY = 'cfcba3d5dbc0e6464606e31874218e3cb58854633c6fb7f16c1cfbca6935d8ea'
 ALGORITHM = 'HS256'
 
 bcrypt_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+oauth_bearer = OAuth2PasswordBearer(tokenUrl="auth/signin")
 
 def get_db():
     db = SessionLocal()
@@ -36,18 +37,43 @@ def authenticate_user(username: str, password: str, db):
     return None
 
 def create_access_token(username: str, user_id: int, expires_delta:timedelta):
-
     encode = {'sub': username, 'id': user_id}
     expires = datetime.now(timezone.utc) + expires_delta
     encode.update({'exp': expires})
 
     return jwt.encode(encode, SECRET_KEY, algorithm=ALGORITHM)
 
+def get_current_user(token: str = Annotated[str, Depends(oauth_bearer)], db: db_dependency = Depends(get_db)):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username: str = payload.get("sub")
+        user_id: int = payload.get("id")
+        if username is None or user_id is None:
+            return HTTPException(status_code=400, detail="Could not validate user")
+        token_data = {"username": username, "id": user_id}
+    except JWTError:
+        return HTTPException(status_code=400, detail="Could not validate user")
+    user = db.query(User).filter(User.id == user_id).first()
+    if user is None:
+        return HTTPException(status_code=400, detail="Could not validate user")
+    return user
+
 @router.post("/auth/signin", status_code=status.HTTP_200_OK)
 async def sign_in(db: db_dependency, form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
     user = authenticate_user(form_data.username, form_data.password, db)
     if not user:
         return HTTPException(status_code=400, detail="Invalid username or password")
+    token = create_access_token(user.username, user.id, timedelta(minutes=30))
+    return {
+        "access_token": token,
+        "token_type": "bearer"
+    }
+
+@router.get("/auth/me", status_code=status.HTTP_200_OK)
+async def me(db: db_dependency):
+    user = authenticate_user(form_data.username, form_data.password, db)
+    if not user:
+        return HTTPException(status_code=401, detail="Invalid username or password")
     token = create_access_token(user.username, user.id, timedelta(minutes=30))
     return {
         "access_token": token,
