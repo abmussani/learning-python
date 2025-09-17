@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Path, HTTPException
 from book import Book
 from requests import BookRequest 
+from starlette import status
 
 
 app = FastAPI()
@@ -19,7 +20,7 @@ BOOKS = [
 def read_books():
     return BOOKS
 
-@app.get("/books/search/ratings/{book_rating}")
+@app.get("/books/search/ratings/{book_rating}", status_code=status.HTTP_200_OK)
 def read_book_by_rating(book_rating: int = Path(ge=0, le=6)):
     books = [book for book in BOOKS if book.rating >= book_rating]
     return books
