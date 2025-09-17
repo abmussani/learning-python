@@ -1,6 +1,3 @@
-# learning-python
-Whatever I will gonna learn related to python, will dump it here
-
 '''
 python3 -m venv fastapienv
 
