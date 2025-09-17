@@ -33,4 +33,5 @@ pydantic ->
 
 starlette
 
-
+passlib
+bcrypt==4.0.1
