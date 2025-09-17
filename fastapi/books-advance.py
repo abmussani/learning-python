@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Path, Query, HttpException
+from fastapi import FastAPI, Path, HTTPException
 from book import Book
 from requests import BookRequest 
 
@@ -42,7 +42,7 @@ def create_book(book_request: BookRequest):
 def update_book(book_id: int, book_request: BookRequest):
     book = next((book for book in BOOKS if book.id == book_id), None)
     if book is None:
-        return HttpException(status_code=404, detail="Book not found")
+        raise HTTPException(status_code=404, detail="Book not found")
     book.title = book_request.title
     book.author = book_request.author
     book.description = book_request.description
@@ -54,7 +54,7 @@ def update_book(book_id: int, book_request: BookRequest):
 def delete_book(book_id: int):
     book = next((book for book in BOOKS if book.id == book_id), None)
     if book is None:
-        return HttpException(status_code=404, detail="Book not found")
+        raise HTTPException(status_code=404, detail="Book not found")
     BOOKS.remove(book)
     return {"message": "Book deleted successfully"}
 
