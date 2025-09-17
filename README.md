@@ -35,3 +35,8 @@ starlette
 
 passlib
 bcrypt==4.0.1
+python-multipart
+"python-jose[cryptography]"
+
+command to generate SECRET_KEY for json
+```openssl rand -hex 32
