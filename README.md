@@ -82,3 +82,7 @@ pip3 install alembic
         assert not any(any_list)
 
     pytest --disable-warning
+
+
+pip3 freeze > requirements.txt
+pip3 install -r requirements.txt
