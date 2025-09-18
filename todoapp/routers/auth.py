@@ -40,7 +40,7 @@ def get_current_user(token: str = Annotated[str, Depends(oauth_bearer)]):
         user_id: int = payload.get("id")
         role: int = payload.get("role")
         if username is None or user_id is None:
-            return HTTPException(status_code=400, detail="Could not validate user")
+            raise HTTPException(status_code=400, detail="Could not validate user")
         return {"username": username, "id": user_id, "role": role}
     except JWTError:
         raise HTTPException(status_code=400, detail="Could not validate user")
@@ -66,7 +66,7 @@ def create_access_token(username: str, user_id: int, role:str,  expires_delta:ti
 async def sign_in(db: db_dependency, form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
     user = authenticate_user(form_data.username, form_data.password, db)
     if not user:
-        return HTTPException(status_code=400, detail="Invalid username or password")
+        raise HTTPException(status_code=400, detail="Invalid username or password")
     token = create_access_token(user.username, user.id, user.role, timedelta(minutes=30))
     return {
         "access_token": token,
@@ -76,20 +76,20 @@ async def sign_in(db: db_dependency, form_data: Annotated[OAuth2PasswordRequestF
 @router.get("/me", status_code=status.HTTP_200_OK)
 async def me(user: user_dependency, db: db_dependency):
     if user is None:
-        return HTTPException(status_code=401, detail="Invalid authentication credentials")
+        raise HTTPException(status_code=401, detail="Invalid authentication credentials")
     
     user_model = db.query(User).filter(User.id == user['id']).first()
     if user_model is None:
-        return HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=404, detail="User not found")
     return user_model
 
 @router.put("/change_password", status_code=status.HTTP_200_OK)
 async def change_password(user: user_dependency, db: db_dependency, passwords: Annotated[ChangePasswordRequest, Depends()]):
     if user is None:
-        return HTTPException(status_code=401, detail="Invalid authentication credentials")
+        raise HTTPException(status_code=401, detail="Invalid authentication credentials")
     db_user = db.query(User).filter(User.id == user['id']).first()
     if not bcrypt_context.verify(passwords.old_password, db_user.hashed_password):
-        return HTTPException(status_code=400, detail="Old password is incorrect")
+        raise HTTPException(status_code=400, detail="Old password is incorrect")
     db_user.hashed_password = bcrypt_context.hash(passwords.new_password)
     db.add(db_user)
     db.commit()

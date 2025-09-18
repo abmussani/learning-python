@@ -24,9 +24,9 @@ user_dependency = Annotated[dict, Depends(get_current_user)]
 @router.get("/")
 async def read_todos(user: user_dependency, db: db_dependency):
     if user is None:
-        return HTTPException(status_code=401, detail="Invalid authentication credentials")
+        raise HTTPException(status_code=401, detail="Invalid authentication credentials")
     if user.get('role') != 'admin':
-        return HTTPException(status_code=403, detail="Not authorized to access all ToDos")
+        raise HTTPException(status_code=403, detail="Not authorized to access all ToDos")
     
     todos = db.query(ToDo).all()
     return todos
@@ -34,20 +34,20 @@ async def read_todos(user: user_dependency, db: db_dependency):
 @router.get("/{todo_id}", status_code=status.HTTP_200_OK)
 async def read_todo(user: user_dependency, db: db_dependency, todo_id: int = Path(gt=0)):
     if user is None:
-        return HTTPException(status_code=401, detail="Invalid authentication credentials")
+        raise HTTPException(status_code=401, detail="Invalid authentication credentials")
     if user.get('role') != 'admin':
-        return HTTPException(status_code=403, detail="Not authorized to access all ToDos")
+        raise HTTPException(status_code=403, detail="Not authorized to access all ToDos")
     todo = db.query(ToDo).filter(ToDo.id == todo_id).first()
     if todo is not None:
         return todo
-    return HTTPException(status_code=404, detail="ToDo not found")
+    raise HTTPException(status_code=404, detail="ToDo not found")
 
 @router.put("/{todo_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def update_todo(user: user_dependency, db: db_dependency, todo_request: ToDoRequest, todo_id: int = Path(gt=0)):
     if user is None:
-        return HTTPException(status_code=401, detail="Invalid authentication credentials")
+        raise HTTPException(status_code=401, detail="Invalid authentication credentials")
     if user.get('role') != 'admin':
-        return HTTPException(status_code=403, detail="Not authorized to access all ToDos")
+        raise HTTPException(status_code=403, detail="Not authorized to access all ToDos")
     
     todo = db.query(ToDo).filter(ToDo.id == todo_id).first()
     if todo is None:
@@ -65,7 +65,7 @@ async def update_todo(user: user_dependency, db: db_dependency, todo_request: To
 @router.delete("/{todo_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_todo(user: user_dependency, db: db_dependency, todo_id: int = Path(gt=0)):
     if user is None:
-        return HTTPException(status_code=401, detail="Invalid authentication credentials")
+        raise HTTPException(status_code=401, detail="Invalid authentication credentials")
     todo = db.query(ToDo).filter(ToDo.id == todo_id).filter(ToDo.owner_id == user.get('id')).first()
     if todo is None:
         raise HTTPException(status_code=404, detail="ToDo not found")

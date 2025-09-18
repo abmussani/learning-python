@@ -76,3 +76,43 @@ def test_read_todos():
         "priority": 1,
         "owner_id": 1
     }]
+
+def test_read_todo_by_id():
+    response = client.get("/todos/1")
+    assert response.status_code == status.HTTP_200_OK
+    assert response.json() == {
+        "id": 1,
+        "title": "Test ToDo",
+        "description": "This is a test ToDo",
+        "completed": False,
+        "priority": 1,
+        "owner_id": 1
+    }
+
+def test_read_todo_not_found():
+    response = client.get("/todos/999")
+    assert response.status_code == status.HTTP_404_NOT_FOUND
+
+def test_create_todo():
+    todo_data = {
+        "title": "New ToDo",
+        "description": "This is a new ToDo",
+        "completed": False,
+        "priority": 2
+    }
+    response = client.post("/todos/", json=todo_data)
+    assert response.status_code == status.HTTP_201_CREATED
+
+def test_update_todo():
+    update_data = {
+        "title": "Updated ToDo",
+        "description": "This ToDo has been updated",
+        "completed": True,
+        "priority": 3
+    }
+    response = client.put("/todos/1", json=update_data)
+    assert response.status_code == status.HTTP_204_NO_CONTENT
+
+def test_delete_todo():
+    response = client.delete("/todos/1")
+    assert response.status_code == status.HTTP_204_NO_CONTENT
