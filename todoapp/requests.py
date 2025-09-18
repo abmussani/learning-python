@@ -14,3 +14,7 @@ class UserRequest(BaseModel):
     password: str = Field(min_length=6)
     is_active: bool = True
     role: str = Field(min_length=1, max_length=20)
+
+class ChangePasswordRequest(BaseModel):
+    old_password: str = Field(min_length=6)
+    new_password: str = Field(min_length=6)
