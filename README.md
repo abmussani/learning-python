@@ -40,3 +40,45 @@ python-multipart
 
 command to generate SECRET_KEY for json
 ```openssl rand -hex 32
+
+
+## for postgresSQL dependency
+pip3 install psycopg2-binary
+
+### for data migrations
+pip3 install alembic
+# Sub commands for alembic
+    alembic init <folder name>
+    alembic revision -m <message>
+    alembic upgrade <revision #>
+    alembic downgrade -1
+
+# to install pytest
+    pip3 install pytest
+
+# Pytest Basics
+    Validate integers:
+        assert 1==1
+        assert 1!=1
+        assert 1>1
+        assert 1<1
+        assert 1>=1
+        assert 1>=1
+    Validate instances:
+        assert isInstance('this is string', str)    # value, type
+        assert not isInstance('10', int)
+    Validate Boolean:
+        assert validate is True
+        assert ('hello' == 'welcome') is False
+    Validate types:
+        assert type('Hello' is str)
+        assert type('Hello' is not int)
+    Validate Types:
+        num_list = [1,2,3,4,5]
+        any_list = [True, False]
+        assert 1 in num_list
+        assert 7 not in num_list
+        assert all(num_list)
+        assert not any(any_list)
+
+    pytest --disable-warning

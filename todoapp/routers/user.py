@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, Path, HTTPException
 from models import User
-from database import engine, SessionLocal
+# from database import engine, SessionLocal
+from database_postgres import engine, SessionLocal
 from typing import Annotated
 from sqlalchemy.orm import Session
 from starlette import status
@@ -47,12 +48,11 @@ async def update_user(db: db_dependency, user_request: UserRequest, user_id: int
     user = db.query(User).filter(User.id == user_id).first()
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")
-    user.username = user_request.username
-    user.email = user_request.email
+    
     user.first_name = user_request.first_name
     user.last_name = user_request.last_name
-    user.hashed_password = user_request.hashed_password
     user.is_active = user_request.is_active
+    user.phone_number = user_request.phone_number
     user.role = user_request.role
     
     db.add(user)

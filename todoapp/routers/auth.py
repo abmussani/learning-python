@@ -2,7 +2,8 @@ import datetime
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from models import User
-from database import engine, SessionLocal
+# from database import engine, SessionLocal
+from database_postgres import engine, SessionLocal
 from typing import Annotated
 from sqlalchemy.orm import Session
 from starlette import status
